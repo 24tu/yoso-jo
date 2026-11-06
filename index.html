@@ -91,6 +91,9 @@ a { color: var(--accent); }
 .tag.go { background: var(--accent-soft); color: var(--accent); }
 .tag.ok { background: var(--ok-soft); color: var(--ok); }
 .tag.ng { background: var(--bad-soft); color: var(--bad); }
+.tag.g1 { background: var(--warn); color: var(--surface); }
+.tag.g2 { background: var(--warn-soft); color: var(--warn); }
+.tag.g3 { background: var(--accent-soft); color: var(--accent); }
 
 details.race { border-top: 1px solid var(--line); }
 details.race summary { list-style: none; cursor: pointer; padding: 9px 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
@@ -298,10 +301,11 @@ function schedule() {
   if (keiba?.coming) for (const d of keiba.days) {
     const iso = `${d.date.slice(0, 4)}-${d.date.slice(4, 6)}-${d.date.slice(6, 8)}`;
     items.push([iso, `競馬 ${d.races.length}レース（推奨 ${d.races.filter(isRec).length}）`]);
+    for (const r of d.races.filter(r => r.grade).sort(byGrade)) items.push([iso, `🏆 ${r.grade} ${r.race_name}（${r.venue}${r.race_no}R ${r.start_time}）`]);
   }
   items.sort((a, b) => a[0].localeCompare(b[0]));
   if (!items.length) return "";
-  return `<section class="card"><h2>🔜 次の予定</h2><ul class="sched">${items.slice(0, 5).map(([d, t]) =>
+  return `<section class="card"><h2>🔜 次の予定</h2><ul class="sched">${items.slice(0, 10).map(([d, t]) =>
     `<li><span class="d num">${md(d)}</span><span>${esc(t)}</span></li>`).join("")}</ul></section>`;
 }
 
@@ -375,6 +379,8 @@ function viewWinner() {
 
 // ---------- 競馬 ----------
 const isRec = r => r.plan?.type === "推奨";
+const byGrade = (a, b) => a.grade.localeCompare(b.grade);
+const gradeTag = r => r.grade ? `<span class="tag ${esc(r.grade.toLowerCase())}">${esc(r.grade)}</span> ` : "";
 const ticket = i => esc(["umatan", "sanrentan"].includes(i.kind) ? i.ticket.replaceAll("-", "→") : i.ticket);
 function planText(r) {
   return [`${r.venue}${r.race_no}R`, ...r.plan.items.map(i => `${KIND[i.kind] || i.kind} ${i.ticket} ${i.stake}円`)].join("\n");
@@ -394,7 +400,7 @@ function raceRow(r, rec) {
       <a class="btn-p" href="${LINKS.ipat}" target="_blank" rel="noopener">JRAネット投票 ↗</a></div>`;
   }
   body += `<p class="small" style="margin-top:8px">予想 ${esc(r.predicted_at || "")}</p>`;
-  return `<details class="race"><summary><span class="race-t num">${esc(r.race_no)}R ${esc(r.start_time)} ${esc(r.race_name)}</span><span>${res} ${tag}</span>
+  return `<details class="race"><summary><span class="race-t num">${esc(r.race_no)}R ${esc(r.start_time)} ${gradeTag(r)}${esc(r.race_name)}</span><span>${res} ${tag}</span>
     <span class="race-s">${esc(r.surface)}${esc(r.distance)}m${top ? `・◎ ${esc(top.umaban)} ${esc(top.horse_name)}` : ""}</span></summary>
     <div class="race-b">${body}</div></details>`;
 }
@@ -412,7 +418,7 @@ function viewKeiba() {
     const all = day.races.filter(r => r.venue === v).sort((a, b) => a.race_no - b.race_no);
     const races = state.onlyRec ? all.filter(isRec) : all;
     const go = all.filter(isRec).map(r => `${r.race_no}R`);
-    html += `<section class="card"><div class="card-h"><h2>📍 ${esc(v)}</h2><span class="small">推奨 ${go.length ? esc(go.join("・")) : "なし"}</span></div>
+    html += `<section class="card"><div class="card-h"><h2>📍 ${esc(v)}</h2><span class="small">${all.filter(r => r.grade).map(r => `${esc(r.grade)} ${r.race_no}R`).concat(`推奨 ${go.length ? esc(go.join("・")) : "なし"}`).join("／")}</span></div>
       ${races.length ? races.map(r => raceRow(r, recs[r.race_id])).join("") : `<p class="note">推奨レースはありません。</p>`}</section>`;
   }
   return html + `<p class="small">買い目は JRA のネット投票に自動では入りません。コピーした内容を見ながら入力してください。オッズは予想した時点の値です。</p>`;
