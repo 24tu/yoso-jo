@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>予想城</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="予想城">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Maru+Gothic:wght@700&display=swap">
+<style>
+:root {
+  --bg: #f5f6f4; --surface: #ffffff; --ink: #15201c; --ink-2: #47544e; --muted: #6f7b75;
+  --line: #e1e5e1; --track: #ebeeea; --accent: #0f6b5c; --accent-soft: #e0f1ec;
+  --bad: #c8372d; --bad-soft: #fbe9e7; --warn: #8a5a00; --warn-soft: #fff4e0; --ok: #1f7a4d; --ok-soft: #e3f4ea;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-display: "Zen Maru Gothic", "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121614; --surface: #1b211e; --ink: #edf2ef; --ink-2: #b7c1bc; --muted: #8f9b95;
+    --line: #2b3430; --track: #262e2a; --accent: #62cdb6; --accent-soft: #1d3530;
+    --bad: #f07a6e; --bad-soft: #3a2220; --warn: #f0c46e; --warn-soft: #3a3020; --ok: #5cc795; --ok-soft: #1d3328;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px;
+  line-height: 1.6; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+}
+main {
+  max-width: 640px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: calc(10px + env(safe-area-inset-top, 0px)) calc(88px + env(safe-area-inset-bottom, 0px));
+}
+[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; }
+h1 { font-size: 18px; }
+h2 { font-size: 16px; }
+h3 { font-size: 14px; color: var(--ink-2); margin-top: 14px; }
+p { margin: 0; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.small { font-size: 12px; color: var(--muted); }
+.note { font-size: 13px; color: var(--ink-2); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-block: 4px 10px; }
+.top-r { display: flex; align-items: center; gap: 6px; }
+.icon-btn { min-width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.status { font-size: 12px; color: var(--muted); text-align: right; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.card-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; font-size: 13px; }
+.error { background: var(--bad-soft); color: var(--bad); border-color: transparent; font-size: 13px; }
+.sched { list-style: none; margin: 6px 0 0; padding: 0; font-size: 14px; }
+.sched li { display: flex; gap: 10px; padding: 3px 0; }
+.sched .d { flex: 0 0 76px; color: var(--ink-2); }
+
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+.row:first-of-type { border-top: 0; }
+.lbl { flex: 0 0 16px; font-size: 12px; color: var(--muted); text-align: right; }
+.balls { display: flex; flex-wrap: wrap; gap: 3px; flex: 1; min-width: 0; }
+.ball { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: var(--accent-soft); color: var(--accent); font-variant-numeric: tabular-nums; }
+.ball.bonus { background: var(--warn-soft); color: var(--warn); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 5px 10px; font-size: 13px; min-height: 34px; white-space: nowrap; }
+.btn-p { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; background: var(--accent); color: var(--surface); border: 0; border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 14px; min-height: 42px; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.acts > * { flex: 1 1 140px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 13px; font-size: 13px; min-height: 34px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--track); color: var(--ink-2); white-space: nowrap; }
+.tag.go { background: var(--accent-soft); color: var(--accent); }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.ng { background: var(--bad-soft); color: var(--bad); }
+
+details.race { border-top: 1px solid var(--line); }
+details.race summary { list-style: none; cursor: pointer; padding: 9px 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; }
+details.race summary::-webkit-details-marker { display: none; }
+.race-t { font-weight: 700; }
+.race-s { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+.race-b { padding-bottom: 12px; }
+.horse { display: grid; grid-template-columns: 20px 26px 1fr auto; gap: 6px; align-items: baseline; padding: 3px 0; font-size: 14px; }
+.horse .m { font-weight: 700; color: var(--accent); }
+.horse .u { font-weight: 700; text-align: right; }
+.bet { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; padding: 2px 0; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 8px 0 0; font-size: 14px; }
+.kv dt { color: var(--ink-2); white-space: nowrap; }
+.kv dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.nb { white-space: nowrap; }
+.pick { font-weight: 700; font-size: 17px; }
+.bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; gap: 2px; margin-top: 8px; }
+.bar i { display: block; background: var(--accent); }
+.bar i:nth-child(2) { background: var(--muted); }
+.bar i:nth-child(3) { background: var(--warn); }
+
+nav { position: fixed; inset: auto 0 0; display: flex; justify-content: center; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 5; }
+nav button { flex: 1; max-width: 128px; border: 0; background: none; padding: 8px 2px 7px; font-size: 11px; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 1px; }
+nav button span { font-size: 19px; line-height: 1.2; }
+nav button[aria-current="page"] { color: var(--accent); font-weight: 700; }
+.toast { position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 7px 16px; border-radius: 999px; font-size: 13px; z-index: 9; }
+
+.field { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <h1>予想城</h1>
+    <div class="top-r">
+      <div class="status num" id="status" role="status"></div>
+      <button class="icon-btn" id="refresh" aria-label="最新にする">🔄</button>
+      <button class="icon-btn" id="gear" aria-label="設定">⚙️</button>
+    </div>
+  </header>
+  <div id="view"></div>
+</main>
+<nav id="nav" aria-label="画面の切り替え"></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+const OWNER = "24tu";
+const API = "https://api.github.com";
+const LINKS = {
+  loto: "https://www.takarakuji-official.jp/",
+  winner: "https://www.toto-dream.com/",
+  ipat: "https://www.ipat.jra.go.jp/",
+};
+const TOKEN_KEY = "yoso_token", CACHE_KEY = "yoso_cache";
+const TABS = [["loto", "🎱", "ロト"], ["winner", "⚽", "WINNER"], ["keiba", "🏇", "競馬"], ["fx", "💹", "FX・日経"], ["record", "📊", "成績"]];
+const TEAM = {
+  "Albirex Niigata": "新潟", "Avispa Fukuoka": "福岡", "Cerezo Osaka": "C大阪", "Chiba": "千葉", "FC Tokyo": "FC東京",
+  "Gamba Osaka": "G大阪", "Hokkaido Consadole Sapporo": "札幌", "Iwata": "磐田", "Kashima Antlers": "鹿島",
+  "Kashiwa Reysol": "柏", "Kawasaki Frontale": "川崎F", "Kofu": "甲府", "Kumamoto": "熊本", "Kyoto": "京都",
+  "Machida": "町田", "Mito": "水戸", "Montedio Yamagata": "山形", "Nagoya Grampus": "名古屋", "Oita Trinita": "大分",
+  "Okayama": "岡山", "Omiya Ardija": "大宮", "Sagan Tosu": "鳥栖", "Sanfrecce Hiroshima": "広島",
+  "Shimizu S-Pulse": "清水", "Shonan Bellmare": "湘南", "Tokushima": "徳島", "Urawa Reds": "浦和",
+  "V-Varen Nagasaki": "長崎", "Vegalta Sendai": "仙台", "Verdy": "東京V", "Vissel Kobe": "神戸", "Yamaga": "松本",
+  "Yokohama F. Marinos": "横浜FM", "Yokohama FC": "横浜FC",
+};
+const KIND = { tansho: "単勝", fukusho: "複勝", umaren: "馬連", wide: "ワイド", umatan: "馬単", sanrenpuku: "3連複", sanrentan: "3連単" };
+// winner_ai の OUTCOMES の並び: 0〜6 ホーム勝ち、7〜10 引き分け、11〜17 アウェイ勝ち
+const OUTCOMES = ["1-0", "2-0", "2-1", "3-0", "3-1", "3-2", "ホーム4点以上で勝ち", "0-0", "1-1", "2-2", "3点以上の引き分け",
+  "0-1", "0-2", "1-2", "0-3", "1-3", "2-3", "アウェイ4点以上で勝ち"];
+const TARGET_PROB = 0.18;
+// fx_ai の assets.py / baselines.py と同じ設定
+const START_YEN = 1000, GOAL_DAYS = 90;
+const FX = [
+  { key: "usdjpy", name: "ドル円", file: "state/trades.csv", cost: () => 0.002, int: true, digits: 2 },
+  { key: "eurjpy", name: "ユーロ円", file: "state/eurjpy_trades.csv", cost: () => 0.005, int: true, digits: 2 },
+  { key: "nikkei", name: "日経平均", file: "state/nikkei_trades.csv", cost: p => p * 0.0005, int: false, digits: 0 },
+  { key: "nikkei_long", name: "日経平均（売らない版）", file: "state/nikkei_long_trades.csv", cost: p => p * 0.0005, int: false, digits: 0 },
+];
+
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pct = (x, d = 1) => `${(x * 100).toFixed(d)}%`;
+const yen = x => `${Math.round(x).toLocaleString("ja-JP")}円`;
+const yen1 = x => `${x.toLocaleString("ja-JP", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}円`;
+const signed = x => `${x >= 0 ? "+" : "-"}${yen(Math.abs(x))}`;
+const sum = a => a.reduce((x, y) => x + y, 0);
+const WD = "日月火水木金土";
+function md(s) { // "2026-11-05" / "20261105" → "11/5(木)"
+  const m = String(s).match(/^(\d{4})-?(\d{2})-?(\d{2})/);
+  if (!m) return esc(s);
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return `${+m[2]}/${+m[3]}(${WD[d.getDay()]})`;
+}
+const hm = iso => { const m = String(iso).match(/[T ](\d{2}:\d{2})/); return m ? m[1] : ""; };
+const stamp = iso => iso ? `${md(iso)} ${hm(iso)}` : "不明";
+function jstToday() { // 端末の時計の設定によらず日本の日付を出す
+  return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+}
+
+function store(key, value) {
+  try {
+    if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value);
+    return true;
+  } catch { return false; }
+}
+function recall(key) { try { return localStorage.getItem(key); } catch { return null; } }
+
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') q = false;
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if (c !== "\r") cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  const [head = [], ...body] = rows;
+  return body.map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
+}
+
+class ApiError extends Error { constructor(status) { super(`GitHub ${status}`); this.status = status; } }
+async function gh(repo, path, raw = true) {
+  const res = await fetch(`${API}/repos/${OWNER}/${repo}/contents/${path}?ref=main`, {
+    cache: "no-store",
+    headers: { Authorization: `Bearer ${state.token}`, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json" },
+  });
+  if (!res.ok) throw new ApiError(res.status);
+  return res.text();
+}
+const ghJson = async (repo, path, raw) => JSON.parse(await gh(repo, path, raw));
+
+const LOADERS = {
+  async loto() {
+    const [l6, l7] = await Promise.all([ghJson("loto_ai", "docs/data.json"), ghJson("loto_ai", "docs/loto7.json")]);
+    return { l6, l7 };
+  },
+  winner: () => ghJson("winner_ai", "state/predictions.json"),
+  async keiba() {
+    const [list, record] = await Promise.all([ghJson("keiba_ai", "data/predictions", false), gh("keiba_ai", "data/record.csv")]);
+    const dates = list.map(f => f.name.replace(".json", "")).filter(n => /^\d{8}$/.test(n)).sort();
+    const today = jstToday().replaceAll("-", "");
+    const coming = dates.filter(d => d >= today);
+    const show = coming.length ? coming : dates.slice(-2);
+    const days = await Promise.all(show.map(d => ghJson("keiba_ai", `data/predictions/${d}.json`)));
+    return { days, record: parseCsv(record), coming: coming.length > 0 };
+  },
+  async fx() {
+    const texts = await Promise.all(FX.map(a => gh("fx_ai", a.file)));
+    return Object.fromEntries(FX.map((a, i) => [a.key, parseCsv(texts[i])]));
+  },
+};
+
+const state = { token: recall(TOKEN_KEY) || "", data: {}, errors: {}, tab: "loto", loadedAt: 0, loading: false, day: null, onlyRec: false, setup: false };
+try { Object.assign(state, JSON.parse(recall(CACHE_KEY) || "{}")); } catch { /* 保存分が壊れていたら読み直す */ }
+if (TABS.some(t => t[0] === location.hash.slice(1))) state.tab = location.hash.slice(1);
+
+async function refresh() {
+  if (state.loading || !state.token) return;
+  state.loading = true; render();
+  await Promise.all(Object.entries(LOADERS).map(async ([k, load]) => {
+    try { state.data[k] = await load(); delete state.errors[k]; }
+    catch (e) { state.errors[k] = e; console.error(k, e); }
+  }));
+  state.loading = false;
+  if (Object.keys(state.errors).length < Object.keys(LOADERS).length) {
+    state.loadedAt = Date.now();
+    store(CACHE_KEY, JSON.stringify({ data: state.data, loadedAt: state.loadedAt }));
+  }
+  render();
+}
+
+function errorText(e) {
+  if (e instanceof ApiError && e.status === 401) return "合言葉が使えません。期限切れかもしれません。⚙️から入れ直してください。";
+  if (e instanceof ApiError && (e.status === 403 || e.status === 404)) return "このデータを読む権限がないか、ファイルが見つかりません。合言葉の設定を確認してください。";
+  if (e instanceof ApiError) return `GitHub からの読み込みに失敗しました（${e.status}）。`;
+  return "読み込めませんでした。電波を確認して🔄を押してください。";
+}
+function errorCard(key) {
+  const e = state.errors[key];
+  if (!e) return "";
+  const old = state.data[key] ? "前に読み込んだ内容を表示しています。" : "";
+  return `<div class="card error">${esc(errorText(e))}${old}</div>`;
+}
+const waiting = key => state.errors[key] ? "" : `<div class="card note">読み込み中です…</div>`;
+
+// ---------- 次の予定 ----------
+function nextWinner() {
+  const now = Date.now();
+  return (state.data.winner || []).filter(p => !p.result && Date.parse(p.kickoff_jst) > now)
+    .sort((a, b) => Date.parse(a.kickoff_jst) - Date.parse(b.kickoff_jst));
+}
+function schedule() {
+  const items = [], { loto, keiba } = state.data, today = jstToday();
+  for (const [name, d] of [["ロト6", loto?.l6], ["ロト7", loto?.l7]])
+    if (d?.next && d.next.draw_date >= today) items.push([d.next.draw_date, `${name} 第${d.next.draw_no}回 抽選`]);
+  const w = nextWinner();
+  if (w.length) items.push([w[0].date, `WINNER ${w.length}試合（最初 ${hm(w[0].kickoff_jst)}）`]);
+  if (keiba?.coming) for (const d of keiba.days) {
+    const iso = `${d.date.slice(0, 4)}-${d.date.slice(4, 6)}-${d.date.slice(6, 8)}`;
+    items.push([iso, `競馬 ${d.races.length}レース（推奨 ${d.races.filter(isRec).length}）`]);
+  }
+  items.sort((a, b) => a[0].localeCompare(b[0]));
+  if (!items.length) return "";
+  return `<section class="card"><h2>🔜 次の予定</h2><ul class="sched">${items.slice(0, 5).map(([d, t]) =>
+    `<li><span class="d num">${md(d)}</span><span>${esc(t)}</span></li>`).join("")}</ul></section>`;
+}
+
+// ---------- ロト ----------
+const balls = (nums, bonus = []) => `<div class="balls">${nums.map(n => `<span class="ball">${esc(n)}</span>`).join("")}${
+  [].concat(bonus ?? []).map(n => `<span class="ball bonus">${esc(n)}</span>`).join("")}</div>`;
+const pad = n => String(n).padStart(2, "0");
+function lotoCard(name, d) {
+  const n = d.next, c = d.last_checked;
+  let html = `<section class="card"><div class="card-h"><h2>🎱 ${name}${n ? ` 第${esc(n.draw_no)}回` : ""}</h2>
+    <span class="small">${n ? `${md(n.draw_date)} 抽選` : ""}</span></div>`;
+  if (n?.tickets?.length) {
+    html += n.tickets.map((t, i) => `<div class="row"><span class="lbl num" aria-label="${i + 1}組目">${i + 1}</span>${balls(t)}
+      <button class="btn" data-copy="${esc(t.map(pad).join(" "))}">コピー</button></div>`).join("");
+    const all = n.tickets.map((t, i) => `${i + 1}組目 ${t.map(pad).join(" ")}`).join("\n");
+    html += `<div class="acts"><button class="btn" data-copy="${esc(all)}">全部コピー</button>
+      <a class="btn-p" href="${LINKS.loto}" target="_blank" rel="noopener">公式サイトで買う ↗</a></div>
+      <p class="small" style="margin-top:8px">予想作成 ${stamp(n.created_at)}</p>`;
+  } else html += `<p class="note">次回の予想はまだありません。</p>`;
+  if (c?.result) {
+    const ts = c.result.tickets || [], best = ts.length ? Math.max(...ts.map(t => t.matches)) : 0;
+    const wins = ts.filter(t => t.grade).map(t => t.grade);
+    html += `<h3>前回の答え合わせ 第${esc(c.draw_no)}回（${md(c.draw_date)}）</h3>
+      <div style="margin-top:6px">${balls(c.result.numbers, c.result.bonus)}</div>
+      <p class="note" style="margin-top:6px">${ts.length}組のうち最高 ${best}個一致・${wins.length ? `当せん ${esc(wins.join("、"))}` : "当せんなし"}</p>`;
+  }
+  return html + `</section>`;
+}
+function viewLoto() {
+  const d = state.data.loto;
+  if (!d) return errorCard("loto") + waiting("loto");
+  return errorCard("loto") + lotoCard("ロト6", d.l6) + lotoCard("ロト7", d.l7) +
+    `<p class="small">ロト6・ロト7は完全なランダム抽選で、どの番号でも当選確率は同じです。予想は実験として見てください。</p>`;
+}
+
+// ---------- WINNER ----------
+const team = n => TEAM[n] || n;
+const vs = p => `${esc(team(p.home))} vs ${esc(team(p.away))}`;
+function matchCard(p) {
+  const target = p.pick_prob >= TARGET_PROB;
+  const home = sum(p.probs.slice(0, 7)), draw = sum(p.probs.slice(7, 11)), away = sum(p.probs.slice(11));
+  const nd = OUTCOMES.map((o, i) => [o, p.probs[i]]).filter((_, i) => i < 7 || i > 10).sort((a, b) => b[1] - a[1])[0];
+  const others = p.top3.slice(1).map(t => `<span class="nb">${esc(t.outcome)} ${pct(t.p)}</span>`).join("・");
+  return `<section class="card"><div class="card-h"><h2>${vs(p)}</h2><span class="small">${md(p.date)} ${hm(p.kickoff_jst)}</span></div>
+    <p style="margin-top:6px"><span class="pick">${esc(p.pick)}</span> <span class="num">${pct(p.pick_prob)}</span>
+      ${target ? `<span class="tag go">🎯 狙い目</span>` : ""} ${p.locked ? `<span class="tag">🔒 固定</span>` : ""}</p>
+    <dl class="kv"><dt>割に合うオッズ</dt><dd>${(1 / p.pick_prob).toFixed(1)}倍〜</dd>
+      ${target ? `<dt>買う目安（2割増し）</dt><dd>${(1.2 / p.pick_prob).toFixed(1)}倍以上</dd>` : ""}
+      <dt>2・3番手</dt><dd>${others}</dd><dt>引き分け以外の1番</dt><dd>${esc(nd[0])} ${pct(nd[1])}</dd></dl>
+    <div class="bar" aria-hidden="true"><i style="width:${home * 100}%"></i><i style="width:${draw * 100}%"></i><i style="width:${away * 100}%"></i></div>
+    <p class="small num">ホーム勝ち ${pct(home, 0)}・引き分け ${pct(draw, 0)}・アウェイ勝ち ${pct(away, 0)}</p>
+    <p class="small">予想更新 ${stamp(p.updated_at)}</p></section>`;
+}
+function viewWinner() {
+  const d = state.data.winner;
+  if (!d) return errorCard("winner") + waiting("winner");
+  const up = nextWinner();
+  const done = d.filter(p => p.result).sort((a, b) => Date.parse(b.kickoff_jst) - Date.parse(a.kickoff_jst)).slice(0, 10);
+  let html = errorCard("winner");
+  if (up.length) {
+    const text = up.map(p => `${md(p.date)} ${team(p.home)} vs ${team(p.away)} ${p.pick}`).join("\n");
+    html += up.map(matchCard).join("") + `<div class="acts" style="margin-bottom:12px"><button class="btn" data-copy="${esc(text)}">予想をコピー</button>
+      <a class="btn-p" href="${LINKS.winner}" target="_blank" rel="noopener">公式サイトで買う ↗</a></div>`;
+  } else html += `<div class="card note">これからの試合の予想はまだありません。日程が出ると自動で作られます。</div>`;
+  html += `<section class="card"><h2>直近の答え合わせ</h2>${done.map(p => `<div class="row"><div><div>${vs(p)}</div>
+      <div class="small">${md(p.date)}・予想 ${esc(p.pick)}</div></div>
+      <div class="num" style="text-align:right">${esc(p.result.score)} <span class="tag ${p.result.hit ? "ok" : "ng"}">${p.result.hit ? "的中" : "はずれ"}</span></div></div>`).join("")}</section>
+    <p class="small">対象は J1 のみです。実際の対象試合・締切・オッズは公式サイトで確認してください。</p>`;
+  return html;
+}
+
+// ---------- 競馬 ----------
+const isRec = r => r.plan?.type === "推奨";
+const ticket = i => esc(["umatan", "sanrentan"].includes(i.kind) ? i.ticket.replaceAll("-", "→") : i.ticket);
+function planText(r) {
+  return [`${r.venue}${r.race_no}R`, ...r.plan.items.map(i => `${KIND[i.kind] || i.kind} ${i.ticket} ${i.stake}円`)].join("\n");
+}
+function raceRow(r, rec) {
+  const top = r.horses?.[0], plan = r.plan, go = isRec(r);
+  const tag = plan ? `<span class="tag ${go ? "go" : ""}">${go ? "🎯 推奨" : "⏸ 見送り"}</span>` : "";
+  const res = rec?.honmei_rank ? `<span class="tag">◎${parseInt(rec.honmei_rank)}着</span>` : "";
+  let body = (r.horses || []).filter(h => h.mark).map(h => `<div class="horse"><span class="m">${esc(h.mark)}</span><span class="u num">${esc(h.umaban)}</span>
+    <span>${esc(h.horse_name)} <span class="small">${esc(h.jockey)}</span></span><span class="num">${pct(h.p_win, 0)}・${esc(h.odds)}倍</span></div>`).join("");
+  if (plan?.items?.length) {
+    body += `<h3>${go ? "買い目" : "買うなら（参考）"} ${yen(plan.total)}</h3>
+      <p class="small">的中率 ${pct(plan.hit, 0)}・期待回収率 ${pct(plan.roi, 0)}</p>` +
+      plan.items.map(i => `<div class="bet"><span>${esc(KIND[i.kind] || i.kind)} <b>${ticket(i)}</b></span><span class="num">${yen(i.stake)}</span></div>`).join("");
+    if (rec && +rec.plan_cost > 0) body += `<p class="note" style="margin-top:6px">結果: 払戻 ${yen(+rec.plan_return)}（収支 ${signed(rec.plan_return - rec.plan_cost)}）</p>`;
+    body += `<div class="acts"><button class="btn" data-copy="${esc(planText(r))}">買い目をコピー</button>
+      <a class="btn-p" href="${LINKS.ipat}" target="_blank" rel="noopener">JRAネット投票 ↗</a></div>`;
+  }
+  body += `<p class="small" style="margin-top:8px">予想 ${esc(r.predicted_at || "")}</p>`;
+  return `<details class="race"><summary><span class="race-t num">${esc(r.race_no)}R ${esc(r.start_time)} ${esc(r.race_name)}</span><span>${res} ${tag}</span>
+    <span class="race-s">${esc(r.surface)}${esc(r.distance)}m${top ? `・◎ ${esc(top.umaban)} ${esc(top.horse_name)}` : ""}</span></summary>
+    <div class="race-b">${body}</div></details>`;
+}
+function viewKeiba() {
+  const d = state.data.keiba;
+  if (!d) return errorCard("keiba") + waiting("keiba");
+  let html = errorCard("keiba");
+  if (!d.days.length) return html + `<div class="card note">予想ファイルがまだありません。</div>`;
+  if (!d.coming) html += `<div class="card warn">次の開催の出馬表はまだ出ていません（木〜金曜に公開）。直近の開催を表示しています。</div>`;
+  const day = d.days.find(x => x.date === state.day) || d.days[0];
+  html += `<div class="chips">${d.days.map(x => `<button class="chip" data-day="${esc(x.date)}" aria-pressed="${x === day}">${md(x.date)}</button>`).join("")}
+    <button class="chip" data-only aria-pressed="${state.onlyRec}">🎯 推奨だけ</button></div>`;
+  const recs = Object.fromEntries(d.record.map(r => [r.race_id, r]));
+  for (const v of new Set(day.races.map(r => r.venue))) {
+    const all = day.races.filter(r => r.venue === v).sort((a, b) => a.race_no - b.race_no);
+    const races = state.onlyRec ? all.filter(isRec) : all;
+    const go = all.filter(isRec).map(r => `${r.race_no}R`);
+    html += `<section class="card"><div class="card-h"><h2>📍 ${esc(v)}</h2><span class="small">推奨 ${go.length ? esc(go.join("・")) : "なし"}</span></div>
+      ${races.length ? races.map(r => raceRow(r, recs[r.race_id])).join("") : `<p class="note">推奨レースはありません。</p>`}</section>`;
+  }
+  return html + `<p class="small">買い目は JRA のネット投票に自動では入りません。コピーした内容を見ながら入力してください。オッズは予想した時点の値です。</p>`;
+}
+
+// ---------- FX・日経 ----------
+function fxSummary(a, rows) {
+  const done = rows.filter(r => r.balance !== "");
+  const last = rows[rows.length - 1];
+  const next = last && last.next_date === "" ? last : null;
+  const s = { balance: START_YEN, hold: START_YEN, trades: 0, hits: 0, days: 0, next, recent: done.slice(-5).reverse() };
+  if (!done.length) return s;
+  const first = +done[0].base_close, end = done[done.length - 1];
+  const raw = START_YEN / first, hu = a.int ? Math.floor(raw) : Math.round(raw * 1e6) / 1e6;
+  const acted = done.filter(r => +r.signal !== 0);
+  return { ...s, balance: +end.balance, hold: START_YEN + hu * (+end.next_close - first) - hu * a.cost(first), trades: acted.length,
+    hits: acted.filter(r => +r.signal * (+r.next_close - +r.base_close) > 0).length,
+    days: Math.round((Date.parse(end.next_date) - Date.parse(done[0].base_date)) / 864e5) };
+}
+const fxWord = sig => ({ 1: "買い", "-1": "売り" }[+sig] || "見送り");
+function fxJudge(s) {
+  if (s.days < GOAL_DAYS) return `練習中（${s.days}日目 / ${GOAL_DAYS}日）`;
+  return s.balance > START_YEN && s.balance > s.hold ? "✅ 条件クリア" : "❌ 条件まだ";
+}
+function viewFx() {
+  const d = state.data.fx;
+  if (!d) return errorCard("fx") + waiting("fx");
+  let html = errorCard("fx") + `<div class="card warn">お金を使わない練習中です。仮想の1000円で記録しています。</div>`;
+  for (const a of FX) {
+    const s = fxSummary(a, d[a.key] || []);
+    const close = s.next ? (+s.next.base_close).toLocaleString("ja-JP", { maximumFractionDigits: a.digits, minimumFractionDigits: a.digits }) : "";
+    html += `<section class="card"><div class="card-h"><h2>💹 ${esc(a.name)}</h2><span class="small">${esc(fxJudge(s))}</span></div>
+      ${s.next ? `<p style="margin-top:6px"><span class="pick">${fxWord(s.next.signal)}</span> <span class="num">上がる確率 ${pct(+s.next.prob)}</span></p>
+        <p class="small">基準日 ${md(s.next.base_date)}・終値 ${close}</p>` : `<p class="note">次の予測はまだありません。</p>`}
+      <dl class="kv"><dt>仮想のお金</dt><dd>${yen1(s.balance)}</dd><dt>持っているだけの場合</dt><dd>${yen1(s.hold)}</dd>
+        <dt>取引（当たり）</dt><dd>${s.trades}回（${s.hits}回）</dd></dl>
+      ${s.recent.length ? `<h3>最近の記録</h3>${s.recent.map(r => `<div class="bet num"><span>${md(r.base_date)} ${fxWord(r.signal)}</span><span>${(+r.pnl >= 0 ? "+" : "") + (+r.pnl).toFixed(1)}円</span></div>`).join("")}` : ""}
+    </section>`;
+  }
+  return html;
+}
+
+// ---------- 成績 ----------
+function viewRecord() {
+  const { loto, winner, keiba, fx } = state.data;
+  let html = ["loto", "winner", "keiba", "fx"].map(errorCard).join("");
+  html += `<div class="card note">予想が外れた分も含めた記録です。回収率100%未満は「買った額より戻りが少ない」という意味です。</div>`;
+  for (const [name, d] of [["ロト6", loto?.l6], ["ロト7", loto?.l7]]) {
+    if (!d) continue;
+    const s = d.stats;
+    html += `<section class="card"><h2>🎱 ${name}</h2>${s.checked_draws ? `<dl class="kv"><dt>答え合わせした回数</dt><dd>${s.checked_draws}回（${s.tickets_total}組）</dd>
+      <dt>平均の一致数</dt><dd>${s.avg_matches.toFixed(2)}個</dd><dt>でたらめに選んだ場合</dt><dd>${s.random_avg_matches.toFixed(2)}個</dd>
+      <dt>当せんした組</dt><dd>${s.prize_tickets}組</dd></dl>` : `<p class="note">まだ答え合わせがありません。</p>`}</section>`;
+  }
+  if (winner) {
+    const done = winner.filter(p => p.result), hit = done.filter(p => p.result.hit).length;
+    const t = done.filter(p => p.pick_prob >= TARGET_PROB), th = t.filter(p => p.result.hit).length;
+    html += `<section class="card"><h2>⚽ WINNER</h2><dl class="kv"><dt>的中</dt><dd>${hit} / ${done.length}試合（${done.length ? pct(hit / done.length) : "-"}）</dd>
+      <dt>でたらめに選んだ場合</dt><dd>${pct(1 / 18)}</dd><dt>🎯 狙い目の的中</dt><dd>${th} / ${t.length}試合</dd></dl></section>`;
+  }
+  if (keiba) {
+    const r = keiba.record, n = r.length || 1;
+    const plan = type => {
+      const x = r.filter(v => v.plan_type === type), cost = sum(x.map(v => +v.plan_cost)), ret = sum(x.map(v => +v.plan_return));
+      return { n: x.length, hit: x.filter(v => +v.plan_return > 0).length, cost, ret };
+    };
+    const p = plan("推奨"), q = plan("見送り");
+    html += `<section class="card"><h2>🏇 競馬</h2><dl class="kv"><dt>対象レース</dt><dd>${r.length}</dd>
+      <dt>◎ 勝率</dt><dd>${pct(r.filter(v => +v.honmei_rank === 1).length / n)}</dd>
+      <dt>◎ 複勝率</dt><dd>${pct(r.filter(v => +v.honmei_rank >= 1 && +v.honmei_rank <= 3).length / n)}</dd>
+      <dt>◎ 単勝回収率</dt><dd>${pct(sum(r.map(v => +v.tan_return)) / (n * 100), 0)}</dd>
+      <dt>🎯 推奨プラン</dt><dd>${p.n}レース・的中 ${p.n ? pct(p.hit / p.n, 0) : "-"}</dd>
+      <dt>　投資 → 払戻</dt><dd>${yen(p.cost)} → ${yen(p.ret)}</dd>
+      <dt>　回収率</dt><dd>${p.cost ? pct(p.ret / p.cost, 0) : "-"}</dd>
+      <dt>⏸ 見送りの参考プラン回収率</dt><dd>${q.cost ? pct(q.ret / q.cost, 0) : "-"}</dd></dl></section>`;
+  }
+  if (fx) html += `<section class="card"><h2>💹 FX・日経（仮想の1000円）</h2><dl class="kv">${FX.map(a =>
+    `<dt>${esc(a.name)}</dt><dd>${yen1(fxSummary(a, fx[a.key] || []).balance)}</dd>`).join("")}</dl></section>`;
+  return html;
+}
+
+// ---------- 設定 ----------
+function viewSetup() {
+  return `<section class="card"><h2>🔑 合言葉の設定</h2>
+    <p class="note" style="margin-top:6px">GitHub で作った読み取り専用の合言葉（github_pat_ で始まる文字）を貼り付けてください。この端末の中だけに保存します。</p>
+    <input class="field" id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" aria-label="合言葉">
+    <div class="acts"><button class="btn-p" id="save">保存して読み込む</button>
+    ${state.token ? `<button class="btn" id="cancel">戻る</button>` : ""}</div></section>
+    ${state.token ? `<section class="card"><h2>この端末から消す</h2><p class="note" style="margin-top:6px">保存した合言葉と予想データを、この端末から消します。</p>
+      <div class="acts"><button class="btn" id="forget">合言葉とデータを消す</button></div></section>` : ""}`;
+}
+
+function render() {
+  const setup = state.setup || !state.token;
+  const views = { loto: viewLoto, winner: viewWinner, keiba: viewKeiba, fx: viewFx, record: viewRecord };
+  $("view").innerHTML = setup ? viewSetup() : (state.tab === "record" ? "" : schedule()) + views[state.tab]();
+  $("nav").hidden = setup;
+  $("refresh").disabled = state.loading;
+  $("status").textContent = state.loading ? "読み込み中…" : state.loadedAt ? `${new Date(state.loadedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新` : "";
+  $("nav").innerHTML = TABS.map(([k, i, t]) => `<button data-tab="${k}" ${k === state.tab ? 'aria-current="page"' : ""}><span aria-hidden="true">${i}</span>${t}</button>`).join("");
+}
+
+let toastTimer;
+function toast(text) {
+  $("toast").textContent = text; $("toast").hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; }, 1800);
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("コピーしました"); }
+  catch { toast("コピーできませんでした"); }
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.dataset.copy !== undefined) return copy(t.dataset.copy);
+  if (t.dataset.tab) { state.tab = t.dataset.tab; history.replaceState(null, "", `#${state.tab}`); render(); scrollTo(0, 0); return; }
+  if (t.dataset.day) { state.day = t.dataset.day; return render(); }
+  if (t.dataset.only !== undefined) { state.onlyRec = !state.onlyRec; return render(); }
+  if (t.id === "refresh") return refresh();
+  if (t.id === "gear") { state.setup = !state.setup; return render(); }
+  if (t.id === "cancel") { state.setup = false; return render(); }
+  if (t.id === "save") {
+    const v = $("token").value.trim();
+    if (!v) return toast("合言葉を貼り付けてください");
+    state.token = v; state.setup = false; state.errors = {};
+    if (!store(TOKEN_KEY, v)) toast("この端末に保存できませんでした");
+    render(); return refresh();
+  }
+  if (t.id === "forget") {
+    store(TOKEN_KEY, null); store(CACHE_KEY, null);
+    Object.assign(state, { token: "", data: {}, errors: {}, loadedAt: 0, setup: false });
+    return render();
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && Date.now() - state.loadedAt > 5 * 60e3) refresh();
+});
+
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js");
+render();
+refresh();
+</script>
+</body>
+</html>
