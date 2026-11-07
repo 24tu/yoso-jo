@@ -381,9 +381,10 @@ function viewWinner() {
 const isRec = r => r.plan?.type === "推奨";
 const byGrade = (a, b) => a.grade.localeCompare(b.grade);
 const gradeTag = r => r.grade ? `<span class="tag ${esc(r.grade.toLowerCase())}">${esc(r.grade)}</span> ` : "";
-const ticket = i => esc(["umatan", "sanrentan"].includes(i.kind) ? i.ticket.replaceAll("-", "→") : i.ticket);
+const ticketText = i => ["umatan", "sanrentan"].includes(i.kind) ? i.ticket.replaceAll("-", "→") : i.ticket;
+const ticket = i => esc(ticketText(i));
 function planText(r) {
-  return [`${r.venue}${r.race_no}R`, ...r.plan.items.map(i => `${KIND[i.kind] || i.kind} ${i.ticket} ${i.stake}円`)].join("\n");
+  return [`${r.venue}${r.race_no}R`, ...r.plan.items.map(i => `${KIND[i.kind] || i.kind} ${ticketText(i)} ${i.stake}円`)].join("\n");
 }
 function raceRow(r, rec) {
   const top = r.horses?.[0], plan = r.plan, go = isRec(r);
@@ -397,7 +398,7 @@ function raceRow(r, rec) {
       plan.items.map(i => `<div class="bet"><span>${esc(KIND[i.kind] || i.kind)} <b>${ticket(i)}</b></span><span class="num">${yen(i.stake)}</span></div>`).join("");
     if (rec && +rec.plan_cost > 0) body += `<p class="note" style="margin-top:6px">結果: 払戻 ${yen(+rec.plan_return)}（収支 ${signed(rec.plan_return - rec.plan_cost)}）</p>`;
     body += `<div class="acts"><button class="btn" data-copy="${esc(planText(r))}">買い目をコピー</button>
-      <a class="btn-p" href="${LINKS.ipat}" target="_blank" rel="noopener">JRAネット投票 ↗</a></div>`;
+      <a class="btn-p" href="${LINKS.ipat}" target="_blank" rel="noopener">即PATで買う ↗</a></div>`;
   }
   body += `<p class="small" style="margin-top:8px">予想 ${esc(r.predicted_at || "")}</p>`;
   return `<details class="race"><summary><span class="race-t num">${esc(r.race_no)}R ${esc(r.start_time)} ${gradeTag(r)}${esc(r.race_name)}</span><span>${res} ${tag}</span>
@@ -421,7 +422,7 @@ function viewKeiba() {
     html += `<section class="card"><div class="card-h"><h2>📍 ${esc(v)}</h2><span class="small">${all.filter(r => r.grade).map(r => `${esc(r.grade)} ${r.race_no}R`).concat(`推奨 ${go.length ? esc(go.join("・")) : "なし"}`).join("／")}</span></div>
       ${races.length ? races.map(r => raceRow(r, recs[r.race_id])).join("") : `<p class="note">推奨レースはありません。</p>`}</section>`;
   }
-  return html + `<p class="small">買い目は JRA のネット投票に自動では入りません。コピーした内容を見ながら入力してください。オッズは予想した時点の値です。</p>`;
+  return html + `<p class="small">買い目は即PATに自動では入りません。コピーした内容を見ながら入力してください。オッズは予想した時点の値です。</p>`;
 }
 
 // ---------- FX・日経 ----------
